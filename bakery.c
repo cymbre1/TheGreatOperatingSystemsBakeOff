@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 
 enum garnish{ CHERRY, CHOCOLATE_CRUMBLES, SPRINKLES, FROSTED_FLOWERS, FROSTED_WORDS };
@@ -32,11 +34,27 @@ Recipe vanilla_cake = {};
 Recipe pineapple_cake = {};
 Recipe pumpkin_cake = {};
 
-
-
-int main(int argv, char* argc)
+int main(int argv, char* argc[])
 {
-    // fork off x processes for bakers
+    pid_t pid;
 
+    // represents the number of bakers in the kitchen
+    int bakers;
 
+    printf("Enter number of bakers:\n");
+    scanf("%d", &bakers);
+
+    // generates a user-defined number of bakers
+    for (int i = 0; i < bakers; i++)
+    {
+        if ((pid = fork()) != 0)    // parent process
+        {
+            printf("I am baker #%d!\n", i+1);
+            break;
+        }
+    }
+
+    sleep(1);
+
+    return 0;
 }
