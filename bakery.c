@@ -3,36 +3,7 @@
 #include <unistd.h>
 #include <string.h>
 
-enum garnish{ CHERRY, CHOCOLATE_CRUMBLES, SPRINKLES, FROSTED_FLOWERS, FROSTED_WORDS };
-
-typedef struct recipe
-{
-    // dry ingredients
-    int flour;
-    int baking_powder;
-    int baking_soda;
-    
-    // wet ingredients
-    int butter;
-    int sugar;
-    int vanilla;
-    int eggs;
-    int milk;
-
-    // frosting ingredients
-    int frosting_butter;
-    int frosting_vanilla;
-    int frosting_cream;
-    
-
-    enum garnish g;
-
-} Recipe;
-
-Recipe chocolate_cake = {};
-Recipe vanilla_cake = {};
-Recipe pineapple_cake = {};
-Recipe pumpkin_cake = {};
+#include "recipe.h"
 
 int main(int argv, char* argc[])
 {
@@ -57,4 +28,19 @@ int main(int argv, char* argc[])
     sleep(1);
 
     return 0;
+}
+
+void bake_cake() 
+{
+
+}
+
+void mix_dry_ingredients() 
+{
+
+}
+
+void mix_wet_ingredients() 
+{
+
 }
