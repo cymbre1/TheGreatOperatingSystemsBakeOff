@@ -30,17 +30,17 @@ int main(int argv, char* argc[])
     return 0;
 }
 
-void bake_cake() 
+void bake_cake(Recipe r) 
 {
 
 }
 
-void mix_dry_ingredients() 
+void mix_dry_ingredients(Recipe r) 
 {
 
 }
 
-void mix_wet_ingredients() 
+void mix_wet_ingredients(Recipe r) 
 {
 
 }
