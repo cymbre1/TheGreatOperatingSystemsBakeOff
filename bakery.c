@@ -21,6 +21,8 @@ int main(int argv, char* argc[])
         if ((pid = fork()) != 0)    // parent process
         {
             printf("I am baker #%d!\n", i+1);
+            // Randomly assign the baker a name
+            // Randomly assign the baker a recipe
             break;
         }
     }
@@ -30,7 +32,7 @@ int main(int argv, char* argc[])
     return 0;
 }
 
-void bake_cake(Recipe r) 
+void bake(Recipe r) 
 {
 
 }
