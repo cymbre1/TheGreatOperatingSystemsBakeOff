@@ -7,6 +7,7 @@
 
 int main(int argv, char* argc[])
 {
+    Recipe recipes[6] = {chocolate_cake, vanilla_cake, cupcakes_with_cherry, cupcakes_with_sprinkles, chocolate_chip_muffins, chocolate_chip_cookies};
     pid_t pid;
 
     // represents the number of bakers in the kitchen
