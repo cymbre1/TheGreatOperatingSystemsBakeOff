@@ -1,4 +1,4 @@
-typedef struct bakery_ingredients
+typedef struct bakeryIngredients
 {
     int flour;
     int cocoa_powder;
@@ -11,21 +11,12 @@ typedef struct bakery_ingredients
     int eggs;
     int milk;
     int cream;
-    int powdered_sugar;
+    int powdered_suga;
 } BakeryIngredients;
 
-typedef struct ingredients_for_one_baker
+typedef struct bakeryEquipment
 {
-    int flour = 500;
-    int cocoa_powder;
-    int baking_powder;
-    int baking_soda;
-    int salt;
-    int butter;
-    int sugar;
-    int vanilla;
-    int eggs;
-    int milk;
-    int cream;
-    int powdered_sugar;
-} IngredientsForOneBaker;
+    int sink;
+    int oven;
+    int stand_mixer;
+} BakeryEquipment;

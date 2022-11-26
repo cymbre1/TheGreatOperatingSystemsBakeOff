@@ -52,6 +52,6 @@ Recipe chocolate_chip_muffins = {"Chocolate Chip Muffins", (DryIngredients){390,
 Recipe chocolate_chip_cookies = {"Chocolate Chip Cookies", (DryIngredients){390, 0, 4, 0, 2}, (WetIngredients){170, 397, 14, 4, 340}, (Frosting){2, 4, 0, 0, 400}, 45, CHOCOLATE_CHIPS};
 
 
-char baker_names[9][13] = {"Cymbre", "Anna", "Chase", "Dr. Bobeldyk", "Wyatt", "Dale", 
+char baker_names[21][13] = {"Cymbre", "Anna", "Chase", "Dr. Bobeldyk", "Wyatt", "Dale", 
                            "Mohammad", "Lucas", "Ethan", "Andrew", "Hanna", "Ari", "Donovan", 
                            "Michael", "Alex", "Raphael", "Trevor", "Steven", "Eldin", "Calob", "Cameron"};
