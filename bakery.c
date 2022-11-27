@@ -71,7 +71,15 @@ int main(int argv, char* argc[])
 
 void generateDefaultValues(int bakers)
 {
+    
+}
 
+int isAvailable(int isNeeded, int isAvailable)
+{
+    if (isAvailable - isNeeded > -1)
+        return 1;
+
+    return 0;
 }
 
 void bake(Recipe r) 
