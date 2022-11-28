@@ -1,5 +1,6 @@
-typedef struct bakeryIngredients
+typedef struct bakery
 {
+    // ingredients
     int flour;
     int cocoa_powder;
     int baking_powder;
@@ -12,11 +13,8 @@ typedef struct bakeryIngredients
     int milk;
     int cream;
     int powdered_suga;
-} BakeryIngredients;
-
-typedef struct bakeryEquipment
-{
+    // equipment
     int sink;
     int oven;
     int stand_mixer;
-} BakeryEquipment;
+} Bakery;
