@@ -14,11 +14,7 @@ typedef struct bakery
     int eggs;
     int milk;
     int cream;
-    int powdered_suga;
-    // equipment
-    int sink;
-    int oven;
-    int stand_mixer;
+    int powdered_sugar;
 } Bakery;
 
 typedef struct baker
