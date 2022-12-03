@@ -8,44 +8,65 @@
 #include <sys/stat.h>
 #include <sys/sem.h>
 
-#include "recipe.h"
 #include "ingredients.h"
 
-void generateDefaultValues(Bakery *b);
-void adjusBakeryValues(int bakers, Bakery *b);
+void wait_semaphore(int semId);
+void signal_semaphore(int semId);
+
+void generateDefaultValues(Bakery *b, int *sink, int *oven, int *stand_mixer);
+void adjustBakeryValues(int bakersCount, Bakery *b, int *sink, int *oven, int *stand_mixer);
+void attachSharedMemorySegments(int* blah, int sharedMemoryID);
+void getSharedMemorySegmentAndCheckIfValid(int *sharedMemoryID);
 
 int main(int argv, char* argc[])
 {
+    struct sembuf sbuf;
+    int semId = semget(IPC_PRIVATE, 1, 00600);
+    semctl(semId, 0, SETVAL, 1);
+
     Recipe recipes[6] = {chocolate_cake, vanilla_cake, cupcakes_with_cherry, cupcakes_with_sprinkles, chocolate_chip_muffins, chocolate_chip_cookies};
     Bakery *bakery;
+
+    // shared kitchen equipment
+    int *sink, *oven, *stand_mixer;
+
     pid_t pid;
-    int bakers;
-    int dishes;
+    int bakersCount;
+    Baker bakers[bakersCount];
 
     // Allocate a shared memory segment
-    int sharedMemoryID = shmget(IPC_PRIVATE, sizeof(Bakery), IPC_CREAT | S_IRUSR | S_IWUSR);
-    if (sharedMemoryID < 0)
+    int bakeryMemoryID = shmget(IPC_PRIVATE, sizeof(Bakery), IPC_CREAT | S_IRUSR | S_IWUSR);
+    if (bakeryMemoryID < 0)
     {
         perror("Unable to obtain shared memory\n");
         exit(1);
     }
-
-    // Attach the shared memory segment
-    bakery = (Bakery *) shmat(sharedMemoryID, 0, 0);
+    
+    bakery = (Bakery *) shmat(bakeryMemoryID, 0, 0);
     if (bakery == (void *)-1)
     {
         perror("Unable to attach\n");
         exit(1);
     }
 
-    printf("Enter number of bakers:\n");
-    scanf("%d", &bakers);
+    int sinkMemoryID, ovenMemoryID, standMixerMemoryID;
+    getSharedMemorySegmentAndCheckIfValid(&sinkMemoryID);
+    getSharedMemorySegmentAndCheckIfValid(&ovenMemoryID);
+    getSharedMemorySegmentAndCheckIfValid(&standMixerMemoryID);
 
-    generateDefaultValues(bakery);
-    adjusBakeryValues(bakers, bakery);
 
-    // generates a user-defined number of bakers
-    for (int i = 0; i < bakers; i++)
+    attachSharedMemorySegments(sink, sinkMemoryID);
+    attachSharedMemorySegments(oven, ovenMemoryID);
+    attachSharedMemorySegments(stand_mixer, standMixerMemoryID);
+
+    printf("Enter number of bakersCount:\n");
+    scanf("%d", &bakersCount);
+
+    generateDefaultValues(bakery, sink, oven, stand_mixer);
+    adjustBakeryValues(bakersCount, bakery, sink, oven, stand_mixer);
+
+    // generates a user-defined number of bakersCount
+    for (int i = 0; i < bakersCount; i++)
     {
         if ((pid = fork()) != 0)    // parent process
         {
@@ -63,12 +84,12 @@ int main(int argv, char* argc[])
     shmdt(bakery); 
 
     // Deallocate the shared memory segment
-    shmctl(sharedMemoryID, IPC_RMID, 0);
+    shmctl(bakeryMemoryID, IPC_RMID, 0);
 
     return 0;
 }
 
-void generateDefaultValues(Bakery *b)
+void generateDefaultValues(Bakery *b, int *sink, int *oven, int *stand_mixer)
 {
     // these are just placeholder values for now
     b->flour = 100;
@@ -82,22 +103,22 @@ void generateDefaultValues(Bakery *b)
     b->eggs = 100;
     b->milk = 100;
     b->cream = 100;
-    b->powdered_suga = 100;
+    b->powdered_sugar = 100;
 
-    b->sink = 1;
-    b->oven = 1;
-    b->stand_mixer = 1;
+    *sink = 1;
+    *oven = 1;
+    *stand_mixer = 1;
 }
 
-void adjusBakeryValues(int bakers, Bakery *b)
+void adjustBakeryValues(int bakersCount, Bakery *b, int *sink, int *oven, int *stand_mixer)
 {
-    if (bakers <= 1)
+    if (bakersCount <= 1)
         return;
     
     // increase ingredients by .75x for every baker
-    double ingredientMult = .75 * (bakers - 1);
-    // increase equipment by 1 for every 3 bakers
-    double equipmentMult = (bakers - 1) / 3;
+    double ingredientMult = .75 * (bakersCount - 1);
+    // increase equipment by 1 for every 3 bakersCount
+    double equipmentMult = (bakersCount - 1) / 3;
 
     b->flour += b->flour * ingredientMult;
     b->cocoa_powder += b->cocoa_powder * ingredientMult;
@@ -110,11 +131,11 @@ void adjusBakeryValues(int bakers, Bakery *b)
     b->eggs += b->eggs * ingredientMult;
     b->milk += b->milk * ingredientMult;
     b->cream += b->cream * ingredientMult;
-    b->powdered_suga += b->powdered_suga * ingredientMult;
+    b->powdered_sugar += b->powdered_sugar * ingredientMult;
 
-    b->sink += equipmentMult;
-    b->oven += equipmentMult;
-    b->stand_mixer += equipmentMult;
+    sink += (int)equipmentMult;
+    oven += (int)equipmentMult;
+    stand_mixer += (int)equipmentMult;
 }
 
 int isAvailable(int isNeeded, int isAvailable)
@@ -125,17 +146,106 @@ int isAvailable(int isNeeded, int isAvailable)
     return 0;
 }
 
-void bake(Recipe r) 
+void bake(Recipe r, int ovenSemID) 
 {
+    wait_semaphore(ovenSemID);
 
+    sleep(r.bake_time);
+
+    signal_semaphore(ovenSemID);
 }
 
-void mixDryIngredients(Recipe r) 
-{
+void mixDryAndWetIngredients(Recipe r, int semId, Baker* baker, Bakery* bakery, int standMixerID) 
+{    
+    wait_semaphore(semId);
 
+    if(!( isAvailable(r.dry_ingredients.flour, bakery->flour) &&
+            isAvailable(r.dry_ingredients.cocoa_powder, bakery->cocoa_powder) && 
+            isAvailable(r.dry_ingredients.baking_powder, bakery->baking_powder) && 
+            isAvailable(r.dry_ingredients.baking_soda, bakery->baking_soda) && 
+            isAvailable(r.dry_ingredients.salt, bakery->salt) && 
+            isAvailable(r.wet_ingredients.butter, bakery->butter) &&
+            isAvailable(r.wet_ingredients.sugar, bakery->sugar) &&
+            isAvailable(r.wet_ingredients.vanilla, bakery->vanilla) &&
+            isAvailable(r.wet_ingredients.eggs, bakery->eggs) &&
+            isAvailable(r.wet_ingredients.milk, bakery->milk) ))
+    {
+        printf("Baker %s doesn't have enough ingredients to finish their recipe.", baker->name);
+        // Do something to terminate the process since it can't finish
+    }
+
+    // Remove dry ingredients from bakery
+    
+    bakery->flour = bakery->flour - r.dry_ingredients.flour;
+    bakery->cocoa_powder = bakery->cocoa_powder - r.dry_ingredients.cocoa_powder;
+    bakery->baking_powder = bakery->baking_powder - r.dry_ingredients.baking_powder;
+    bakery->baking_soda = bakery->baking_soda - r.dry_ingredients.baking_soda;
+    bakery->salt = bakery->salt - r.dry_ingredients.salt;
+    
+
+    // Remove wet ingredients from bakery
+    bakery->butter = bakery->butter - r.wet_ingredients.butter;
+    bakery->sugar = bakery->sugar - r.wet_ingredients.sugar;
+    bakery->vanilla = bakery->vanilla - r.wet_ingredients.vanilla;
+    bakery->eggs = bakery->eggs - r.wet_ingredients.eggs;
+    bakery->milk = bakery->milk - r.wet_ingredients.milk;
+    
+    signal_semaphore(semId);
+
+    printf("Baker %s is mixing their dry ingredients.\n", baker->name);
+    sleep(1);
+    printf("Baker %s is done mixing their dry ingredients and is mixing their wet ingredients.\n", baker->name);
+    sleep(1);
+
+    wait_semaphore(standMixerID);
+
+    printf("Baker %s is done mixing their dry and wet ingredients together.\n", baker->name);
+    sleep(1);
+
+    signal_semaphore(standMixerID);
+
+    baker->dishCounter = baker->dishCounter + 2;
 }
 
-void mixWetIngredients(Recipe r) 
+void wait_semaphore(int sem_id)
 {
+    struct sembuf sbuf;
 
+    sbuf.sem_num = 0;
+    sbuf.sem_op = -1;
+    sbuf.sem_flg = 0;
+
+    semop(sem_id, &sbuf, 1);
+}
+
+void signal_semaphore(int sem_id)
+{
+    struct sembuf sbuf;
+
+    sbuf.sem_num = 0;
+    sbuf.sem_op = 1;
+    sbuf.sem_flg = 0;
+
+    semop(sem_id, &sbuf, 1);
+}
+
+void attachSharedMemorySegments(int* blah, int sharedMemoryID)
+{    
+
+    blah = (int *) shmat(sharedMemoryID, 0, 0);
+    if (blah == (void *)-1)
+    {
+        perror("Unable to attach\n");
+        exit(1);
+    }
+}
+
+void getSharedMemorySegmentAndCheckIfValid(int *sharedMemoryID)
+{
+    *sharedMemoryID = shmget(IPC_PRIVATE, sizeof(int), IPC_CREAT | S_IRUSR | S_IWUSR);
+    if (sharedMemoryID < 0)
+    {
+        perror("Unable to obtain shared memory\n");
+        exit(1);
+    }
 }
