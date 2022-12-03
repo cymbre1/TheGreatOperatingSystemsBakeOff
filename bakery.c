@@ -159,7 +159,23 @@ void mixDryAndWetIngredients(Recipe r, int semId, Baker* baker, Bakery* bakery, 
 {    
     wait_semaphore(semId);
 
+    if(!( isAvailable(r.dry_ingredients.flour, bakery->flour) &&
+            isAvailable(r.dry_ingredients.cocoa_powder, bakery->cocoa_powder) && 
+            isAvailable(r.dry_ingredients.baking_powder, bakery->baking_powder) && 
+            isAvailable(r.dry_ingredients.baking_soda, bakery->baking_soda) && 
+            isAvailable(r.dry_ingredients.salt, bakery->salt) && 
+            isAvailable(r.wet_ingredients.butter, bakery->butter) &&
+            isAvailable(r.wet_ingredients.sugar, bakery->sugar) &&
+            isAvailable(r.wet_ingredients.vanilla, bakery->vanilla) &&
+            isAvailable(r.wet_ingredients.eggs, bakery->eggs) &&
+            isAvailable(r.wet_ingredients.milk, bakery->milk) ))
+    {
+        printf("Baker %s doesn't have enough ingredients to finish their recipe.", baker->name);
+        // Do something to terminate the process since it can't finish
+    }
+
     // Remove dry ingredients from bakery
+    
     bakery->flour = bakery->flour - r.dry_ingredients.flour;
     bakery->cocoa_powder = bakery->cocoa_powder - r.dry_ingredients.cocoa_powder;
     bakery->baking_powder = bakery->baking_powder - r.dry_ingredients.baking_powder;
