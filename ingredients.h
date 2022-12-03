@@ -1,3 +1,5 @@
+#include "recipe.h"
+
 typedef struct bakery
 {
     // ingredients
@@ -18,3 +20,11 @@ typedef struct bakery
     int oven;
     int stand_mixer;
 } Bakery;
+
+typedef struct baker
+{
+    int stationNumber;
+    Recipe recipe;
+    int dishCounter;
+    char name[40];
+} Baker;

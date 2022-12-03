@@ -8,18 +8,25 @@
 #include <sys/stat.h>
 #include <sys/sem.h>
 
-#include "recipe.h"
 #include "ingredients.h"
 
+void wait_semaphore(int semId);
+void signal_semaphore(int semId);
+
 void generateDefaultValues(Bakery *b);
-void adjusBakeryValues(int bakers, Bakery *b);
+void adjusBakeryValues(int bakersCount, Bakery *b);
 
 int main(int argv, char* argc[])
 {
+    struct sembuf sbuf;
+    int semId = semget(IPC_PRIVATE, 1, 00600);
+    semctl(semId, 0, SETVAL, 1);
+
     Recipe recipes[6] = {chocolate_cake, vanilla_cake, cupcakes_with_cherry, cupcakes_with_sprinkles, chocolate_chip_muffins, chocolate_chip_cookies};
     Bakery *bakery;
     pid_t pid;
-    int bakers;
+    int bakersCount;
+    Baker bakers[bakersCount];
     int dishes;
 
     // Allocate a shared memory segment
@@ -38,14 +45,14 @@ int main(int argv, char* argc[])
         exit(1);
     }
 
-    printf("Enter number of bakers:\n");
-    scanf("%d", &bakers);
+    printf("Enter number of bakersCount:\n");
+    scanf("%d", &bakersCount);
 
     generateDefaultValues(bakery);
-    adjusBakeryValues(bakers, bakery);
+    adjusBakeryValues(bakersCount, bakery);
 
-    // generates a user-defined number of bakers
-    for (int i = 0; i < bakers; i++)
+    // generates a user-defined number of bakersCount
+    for (int i = 0; i < bakersCount; i++)
     {
         if ((pid = fork()) != 0)    // parent process
         {
@@ -89,15 +96,15 @@ void generateDefaultValues(Bakery *b)
     b->stand_mixer = 1;
 }
 
-void adjusBakeryValues(int bakers, Bakery *b)
+void adjusBakeryValues(int bakersCount, Bakery *b)
 {
-    if (bakers <= 1)
+    if (bakersCount <= 1)
         return;
     
     // increase ingredients by .75x for every baker
-    double ingredientMult = .75 * (bakers - 1);
-    // increase equipment by 1 for every 3 bakers
-    double equipmentMult = (bakers - 1) / 3;
+    double ingredientMult = .75 * (bakersCount - 1);
+    // increase equipment by 1 for every 3 bakersCount
+    double equipmentMult = (bakersCount - 1) / 3;
 
     b->flour += b->flour * ingredientMult;
     b->cocoa_powder += b->cocoa_powder * ingredientMult;
@@ -130,12 +137,56 @@ void bake(Recipe r)
 
 }
 
-void mixDryIngredients(Recipe r) 
-{
+void mixDryAndWetIngredients(Recipe r, int semId, Baker* baker, Bakery* bakery) 
+{    
+    wait_semaphore(semId);
 
+    // Remove dry ingredients from bakery
+    bakery->flour = bakery->flour - r.dry_ingredients.flour;
+    bakery->cocoa_powder = bakery->cocoa_powder - r.dry_ingredients.cocoa_powder;
+    bakery->baking_powder = bakery->baking_powder - r.dry_ingredients.baking_powder;
+    bakery->baking_soda = bakery->baking_soda - r.dry_ingredients.baking_soda;
+    bakery->salt = bakery->salt - r.dry_ingredients.salt;
+    
+
+    // Remove wet ingredients from bakery
+    bakery->butter = bakery->butter - r.wet_ingredients.butter;
+    bakery->sugar = bakery->sugar - r.wet_ingredients.sugar;
+    bakery->vanilla = bakery->vanilla - r.wet_ingredients.vanilla;
+    bakery->eggs = bakery->eggs - r.wet_ingredients.eggs;
+    bakery->milk = bakery->milk - r.wet_ingredients.milk;
+    
+    signal_semaphore(semId);
+
+    printf("Baker %s is mixing their dry ingredients.\n", baker->name);
+    sleep(1);
+    printf("Baker %s is done mixing their dry ingredients and is mixing their wet ingredients.\n", baker->name);
+    sleep(1);
+
+    printf("Baker %s is done mixing their dry and wet ingredients together.\n", baker->name);
+    sleep(1);
+
+    baker->dishCounter = baker->dishCounter + 2;
 }
 
-void mixWetIngredients(Recipe r) 
+void wait_semaphore(int sem_id)
 {
+    struct sembuf sbuf;
 
+    sbuf.sem_num = 0;
+    sbuf.sem_op = -1;
+    sbuf.sem_flg = 0;
+
+    semop(sem_id, &sbuf, 1);
+}
+
+void signal_semaphore(int sem_id)
+{
+    struct sembuf sbuf;
+
+    sbuf.sem_num = 0;
+    sbuf.sem_op = 1;
+    sbuf.sem_flg = 0;
+
+    semop(sem_id, &sbuf, 1);
 }
