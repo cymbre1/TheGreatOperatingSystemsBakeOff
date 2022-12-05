@@ -85,6 +85,12 @@ int main(int argv, char* argc[])
     // Deallocate the shared memory segment
     shmctl(bakeryMemoryID, IPC_RMID, 0);
 
+    // Deallocate semaphores
+    semctl(pantry, 0, IPC_RMID);
+    semctl(oven, 0, IPC_RMID);
+    semctl(sink, 0, IPC_RMID);
+    semctl(standMixer, 0, IPC_RMID);
+
     return 0;
 }
 
