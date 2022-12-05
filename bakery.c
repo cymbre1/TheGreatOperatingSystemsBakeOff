@@ -166,7 +166,7 @@ void mixDryAndWetIngredients(Recipe r, Bakery* bakery, int baker, int dishes, in
             isAvailable(r.wet_ingredients.eggs, bakery->eggs) &&
             isAvailable(r.wet_ingredients.milk, bakery->milk) ))
     {
-        printf("Baker #%d doesn't have enough ingredients to finish their recipe.", baker);
+        printf("Baker #%d doesn't have enough ingredients to finish their recipe.\n", baker);
 
         // Do something to terminate the process since it can't finish
         return;
