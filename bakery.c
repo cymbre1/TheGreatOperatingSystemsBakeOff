@@ -12,9 +12,10 @@
 #include "ingredients.h"
 
 int isAvailable(int isNeeded, int isAvailable);
-void mixDryAndWetIngredients(Recipe r, Pantry *pantry, char bakerName[13], int dishes, int pantrySem);
-void useStandMixer(char bakerName[], int dishes, int standMixerSem);
-void bake(char bakerName[], int ovenSem);
+void mixDryAndWetIngredients(Recipe r, Pantry *pantry, char bakerName[], char recipeName[], int* finished, int pantrySem);
+void useStandMixer(char bakerName[], int standMixerSem);
+void bake(char bakerName[], char recipeName[], int ovenSem);
+void finish(Pantry *pantry, int pantrySem);
 
 void wait_semaphore(int semId);
 void signal_semaphore(int semId);
@@ -28,7 +29,7 @@ int main(int argv, char *argc[])
     char name[13];
     Recipe recipe;
     int id = 0;
-    int dishCount = 0;
+    int finished = 0;
 
     int pantrySem = semget(IPC_PRIVATE, 1, 00600);
     semctl(pantrySem, 0, SETVAL, 1);
@@ -83,14 +84,20 @@ int main(int argv, char *argc[])
     srand(time(NULL) + id);
     recipe = recipes[rand() % 6];
     strcpy(name, baker_names[rand() % 13]);
-    printf("My name is %s\n", name);
+    // printf("My name is %s\n", name);
 
-    mixDryAndWetIngredients(chocolate_cake, pantry, name, dishCount, pantrySem);
+    mixDryAndWetIngredients(chocolate_cake, pantry, name, recipe.name, &finished, pantrySem);
 
-    // last baker will handle memory
-    if (id == bakersCount - 1)
+    if (finished == 0)
+        useStandMixer(name, standMixerSem);
+
+    bake(name, recipe.name, ovenSem);
+    finish(pantry, pantrySem);
+
+    // parent baker manages memory
+    if (id == 0)
     {
-        sleep(1);
+        while (pantry->finished < bakersCount - 1) {}
 
         // Detach the shared memory segment
         shmdt(pantry);
@@ -116,9 +123,11 @@ int isAvailable(int isNeeded, int isAvailable)
     return 0;
 }
 
-void mixDryAndWetIngredients(Recipe r, Pantry *pantry, char bakerName[13], int dishes, int pantrySem)
+void mixDryAndWetIngredients(Recipe r, Pantry *pantry, char bakerName[], char recipeName[], int* finished, int pantrySem)
 {
     wait_semaphore(pantrySem);
+    printf("%s is in the pantry\n\n", bakerName);
+    sleep(1);
 
     if (!(isAvailable(r.dry_ingredients.flour, pantry->flour) &&
           isAvailable(r.dry_ingredients.cocoa_powder, pantry->cocoa_powder) &&
@@ -131,10 +140,12 @@ void mixDryAndWetIngredients(Recipe r, Pantry *pantry, char bakerName[13], int d
           isAvailable(r.wet_ingredients.eggs, pantry->eggs) &&
           isAvailable(r.wet_ingredients.milk, pantry->milk)))
     {
-        printf("%s doesn't have enough ingredients to finish their recipe.\n", bakerName);
+        printf("%s doesn't have enough ingredients to finish their %s. %s has left the kitchen.\n\n", bakerName, recipeName, bakerName);
 
         // Do something to terminate the process since it can't finish
-        exit(0);
+        signal_semaphore(pantrySem);
+        *finished = 1;
+        return;
     }
 
     // Remove dry ingredients from pantry
@@ -151,38 +162,41 @@ void mixDryAndWetIngredients(Recipe r, Pantry *pantry, char bakerName[13], int d
     pantry->eggs = pantry->eggs - r.wet_ingredients.eggs;
     pantry->milk = pantry->milk - r.wet_ingredients.milk;
 
+    printf("%s has left the pantry\n\n", bakerName);
     signal_semaphore(pantrySem);
-
-    printf("%s is mixing their dry ingredients.\n", bakerName);
-    sleep(1);
-    printf("%s is done mixing their dry ingredients and is mixing their wet ingredients.\n", bakerName);
-    sleep(1);
-
-    dishes += 2;
 }
 
-void useStandMixer(char bakerName[], int dishes, int standMixerSem)
+void useStandMixer(char bakerName[], int standMixerSem)
 {
     wait_semaphore(standMixerSem);
 
-    printf("%s is done mixing their dry and wet ingredients together.\n", bakerName);
-    sleep(1);
+    printf("%s is now using the stand mixer\n\n", bakerName);
+    
+    sleep(4);
 
     signal_semaphore(standMixerSem);
 
-    dishes += 1;
+    printf("%s is done using the stand mixer.\n\n", bakerName);
 }
 
-void bake(char bakerName[], int ovenSem)
+void bake(char bakerName[], char recipeName[], int ovenSem)
 {
     wait_semaphore(ovenSem);
 
     // TODO: print name not number
-    printf("%s is baking their pastry!\n", bakerName);
+    printf("%s is baking their %s!\n\n", bakerName, recipeName);
     sleep(5);
-    printf("ding ding ding!\n");
+    printf("ding ding ding! The %s is done!\n\n", recipeName);
 
     signal_semaphore(ovenSem);
+}
+
+void finish(Pantry *pantry, int pantrySem)
+{
+    wait_semaphore(pantrySem);
+    pantry->finished++;
+    printf("%d\n", pantry->finished);
+    signal_semaphore(pantrySem);
 }
 
 void wait_semaphore(int semId)
@@ -222,6 +236,7 @@ void generateDefaultValues(Pantry *p)
     p->milk = 340;
     p->cream = 100;
     p->powdered_sugar = 400;
+    p->finished = 0;
 }
 
 void adjustBakeryValues(int bakersCount, Pantry *p)
@@ -246,6 +261,4 @@ void adjustBakeryValues(int bakersCount, Pantry *p)
     p->milk += p->milk * ingredientMult;
     p->cream += p->cream * ingredientMult;
     p->powdered_sugar += p->powdered_sugar * ingredientMult;
-
-    // TODO: how to do counting semaphore?
 }

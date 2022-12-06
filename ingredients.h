@@ -15,6 +15,7 @@ typedef struct pantry
     int milk;
     int cream;
     int powdered_sugar;
+    int finished;
 } Pantry;
 
 typedef struct baker

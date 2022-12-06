@@ -43,13 +43,13 @@ typedef struct recipe
 
 } Recipe;
 
-Recipe chocolate_cake = {"Chocolate Cake", (DryIngredients){ 210, 64, 4, 12, 6}, (WetIngredients){1, 400, 4, 2, 240}, (Frosting){2, 4, 0, 50, 400}, 45, CHOCOLATE_CRUMBLES};
-Recipe vanilla_cake = {"Vanilla Cake", (DryIngredients){390, 0, 4, 0, 2}, (WetIngredients){170, 397, 14, 4, 340}, (Frosting){2, 4, 0, 0, 400}, 45, CHERRY};
-Recipe funfetti_cake = {"Vanilla Cake", (DryIngredients){390, 0, 4, 0, 2}, (WetIngredients){170, 397, 14, 4, 340}, (Frosting){2, 4, 0, 0, 400}, 45, SPRINKLES};
-Recipe cupcakes_with_cherry = {"Vanilla Cake", (DryIngredients){390, 0, 4, 0, 2}, (WetIngredients){170, 397, 14, 4, 340}, (Frosting){2, 4, 0, 0, 400}, 45, CHERRY};
-Recipe cupcakes_with_sprinkles = {"Vanilla Cake", (DryIngredients){390, 0, 4, 0, 2}, (WetIngredients){170, 397, 14, 4, 340}, (Frosting){2, 4, 0, 0, 400}, 45, SPRINKLES};
-Recipe chocolate_chip_muffins = {"Chocolate Chip Muffins", (DryIngredients){390, 0, 4, 0, 2}, (WetIngredients){170, 397, 14, 4, 340}, (Frosting){2, 4, 0, 0, 400}, 45, CHOCOLATE_CHIPS};
-Recipe chocolate_chip_cookies = {"Chocolate Chip Cookies", (DryIngredients){390, 0, 4, 0, 2}, (WetIngredients){170, 397, 14, 4, 340}, (Frosting){2, 4, 0, 0, 400}, 45, CHOCOLATE_CHIPS};
+Recipe chocolate_cake = {"Chocolate Cake", (DryIngredients){ 210, 64, 4, 12, 6}, (WetIngredients){1, 400, 4, 2, 240}, (Frosting){2, 4, 0, 50, 400}, 5, CHOCOLATE_CRUMBLES};
+Recipe vanilla_cake = {"Vanilla Cake", (DryIngredients){390, 0, 4, 0, 2}, (WetIngredients){170, 397, 14, 4, 340}, (Frosting){2, 4, 0, 0, 400}, 5, CHERRY};
+Recipe funfetti_cake = {"Vanilla Cake", (DryIngredients){390, 0, 4, 0, 2}, (WetIngredients){170, 397, 14, 4, 340}, (Frosting){2, 4, 0, 0, 400}, 5, SPRINKLES};
+Recipe cupcakes_with_cherry = {"Vanilla Cake", (DryIngredients){390, 0, 4, 0, 2}, (WetIngredients){170, 397, 14, 4, 340}, (Frosting){2, 4, 0, 0, 400}, 5, CHERRY};
+Recipe cupcakes_with_sprinkles = {"Vanilla Cake", (DryIngredients){390, 0, 4, 0, 2}, (WetIngredients){170, 397, 14, 4, 340}, (Frosting){2, 4, 0, 0, 400}, 5, SPRINKLES};
+Recipe chocolate_chip_muffins = {"Chocolate Chip Muffins", (DryIngredients){390, 0, 4, 0, 2}, (WetIngredients){170, 397, 14, 4, 340}, (Frosting){2, 4, 0, 0, 400}, 5, CHOCOLATE_CHIPS};
+Recipe chocolate_chip_cookies = {"Chocolate Chip Cookies", (DryIngredients){390, 0, 4, 0, 2}, (WetIngredients){170, 397, 14, 4, 340}, (Frosting){2, 4, 0, 0, 400}, 5, CHOCOLATE_CHIPS};
 
 
 char baker_names[21][13] = {"Cymbre", "Anna", "Chase", "Dr. Bobeldyk", "Wyatt", "Dale", 
