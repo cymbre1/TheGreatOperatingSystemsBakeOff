@@ -40,9 +40,6 @@ int main(int argv, char *argc[])
     int ovenSem = semget(IPC_PRIVATE, 1, 00600);
     semctl(ovenSem, 0, SETVAL, 1);
 
-    int sinkSem = semget(IPC_PRIVATE, 1, 00600);
-    semctl(sinkSem, 0, SETVAL, 1);
-
     int standMixerSem = semget(IPC_PRIVATE, 1, 00600);
     semctl(standMixerSem, 0, SETVAL, 1);
 
@@ -87,7 +84,6 @@ int main(int argv, char *argc[])
     srand(time(NULL) + id);
     recipe = recipes[rand() % 6];
     strcpy(name, baker_names[rand() % 13]);
-    // printf("My name is %s\n", name);
 
     mixDryAndWetIngredients(chocolate_cake, pantry, name, recipe.name, &finished, pantrySem);
 
@@ -100,7 +96,7 @@ int main(int argv, char *argc[])
     // parent baker manages memory
     if (id == 0)
     {
-        while (pantry->finished < bakersCount - 1) {}
+        while (pantry->finished < bakersCount) {}
 
         // Detach the shared memory segment
         shmdt(pantry);
@@ -111,7 +107,6 @@ int main(int argv, char *argc[])
         // Deallocate semaphores
         semctl(pantrySem, 0, IPC_RMID);
         semctl(ovenSem, 0, IPC_RMID);
-        semctl(sinkSem, 0, IPC_RMID);
         semctl(standMixerSem, 0, IPC_RMID);
     }
 
@@ -198,7 +193,6 @@ void finish(Pantry *pantry, int pantrySem)
 {
     wait_semaphore(pantrySem);
     pantry->finished++;
-    printf("%d\n", pantry->finished);
     signal_semaphore(pantrySem);
 }
 
