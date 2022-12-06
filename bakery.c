@@ -7,12 +7,13 @@
 #include <sys/shm.h>
 #include <sys/stat.h>
 #include <sys/sem.h>
+#include <time.h>
 
 #include "ingredients.h"
 
 
 int isAvailable(int isNeeded, int isAvailable);
-void mixDryAndWetIngredients(Recipe r, Bakery* bakery, int baker, int dishes, int pantry);
+void mixDryAndWetIngredients(Recipe r, Bakery* bakery, char bakerName[13], int dishes, int pantry);
 void useStandMixer(int baker, int dishes, int standMixer);
 void bake(int oven, int baker); 
 
@@ -25,8 +26,9 @@ void adjustBakeryValues(int bakersCount, Bakery *b);
 int main(int argv, char* argc[])
 {
     // baker info
-    char name[40];
-    int id;
+    char name[13];
+    Recipe recipe;
+    int id; 
     int dishCount = 0;
 
     int pantry = semget(IPC_PRIVATE, 1, 00600);
@@ -69,22 +71,31 @@ int main(int argv, char* argc[])
     generateDefaultValues(bakery);
     adjustBakeryValues(bakersCount, bakery);
 
+
     // generates a user-defined number of bakersCount
     for (int i = 0; i < bakersCount; i++)
     {
         if ((pid = fork()) != 0)    // parent process
         {
-            // TODO: randomly assign baker name & recipe
+            // randomly assign baker name & recipe
+            int recipeNum = rand() % 6;
+            recipe = recipes[recipeNum];
+
+            int nameNum = rand() % 13;
+            strcpy(name, baker_names[nameNum]);
+            printf("My name is %s %d\n", name, recipeNum);
+            printf("My recipe is %s %d\n", recipe.name, nameNum);
             id = i + 1;
             break;
         }
+        srand(time(NULL));
+        sleep(1);
     }
 
-    // leave this in for now
     if (id > bakersCount + 1)
         return 0;
 
-    mixDryAndWetIngredients(chocolate_cake, bakery, id, dishCount, pantry);
+    mixDryAndWetIngredients(chocolate_cake, bakery, name, dishCount, pantry);
 
     // Detach the shared memory segment
     shmdt(bakery); 
@@ -109,7 +120,7 @@ int isAvailable(int isNeeded, int isAvailable)
     return 0;
 }
 
-void mixDryAndWetIngredients(Recipe r, Bakery* bakery, int baker, int dishes, int pantry) 
+void mixDryAndWetIngredients(Recipe r, Bakery* bakery, char bakerName[13], int dishes, int pantry) 
 {    
     wait_semaphore(pantry);
 
@@ -124,7 +135,7 @@ void mixDryAndWetIngredients(Recipe r, Bakery* bakery, int baker, int dishes, in
             isAvailable(r.wet_ingredients.eggs, bakery->eggs) &&
             isAvailable(r.wet_ingredients.milk, bakery->milk) ))
     {
-        printf("Baker #%d doesn't have enough ingredients to finish their recipe.\n", baker);
+        printf("Baker #%s doesn't have enough ingredients to finish their recipe.\n", bakerName);
 
         // Do something to terminate the process since it can't finish
         return;
@@ -146,9 +157,9 @@ void mixDryAndWetIngredients(Recipe r, Bakery* bakery, int baker, int dishes, in
     
     signal_semaphore(pantry);
 
-    printf("Baker #%d is mixing their dry ingredients.\n", baker);
+    printf("Baker #%s is mixing their dry ingredients.\n", bakerName);
     sleep(1);
-    printf("Baker #%d is done mixing their dry ingredients and is mixing their wet ingredients.\n", baker);
+    printf("Baker #%s is done mixing their dry ingredients and is mixing their wet ingredients.\n", bakerName);
     sleep(1);
 
     dishes += 2;
