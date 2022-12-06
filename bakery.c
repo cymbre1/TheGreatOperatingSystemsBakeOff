@@ -27,7 +27,7 @@ int main(int argv, char *argc[])
     // baker info
     char name[13] = "Fake";
     Recipe recipe;
-    int id;
+    int id = 0;
     int dishCount = 0;
 
     int pantry = semget(IPC_PRIVATE, 1, 00600);
@@ -74,9 +74,9 @@ int main(int argv, char *argc[])
     {
         if ((pid = fork()) != 0) // parent process
         {
-            id = i;
             break;
         }
+        id = i;
     }
 
     // randomly assign baker name & recipe
@@ -87,6 +87,7 @@ int main(int argv, char *argc[])
 
     mixDryAndWetIngredients(chocolate_cake, bakery, name, dishCount, pantry);
 
+    // last baker will handle memory
     if (id == bakersCount - 1)
     {
         sleep(1);
