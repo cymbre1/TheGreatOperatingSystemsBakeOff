@@ -22,8 +22,11 @@ void signal_semaphore(int semId);
 void generateDefaultValues(Pantry *p);
 void adjustBakeryValues(int bakersCount, Pantry *p);
 
+void sigHandler(int);
+
 int main(int argv, char *argc[])
 {
+    signal(SIGINT, sigHandler);
     // baker info
     char name[13];
     Recipe recipe;
@@ -248,4 +251,9 @@ void adjustBakeryValues(int bakersCount, Pantry *p)
     p->powdered_sugar += p->powdered_sugar * ingredientMult;
 
     // TODO: how to do counting semaphore?
+}
+
+void sigHandler(int sigNum)
+{
+    exit(0);
 }
