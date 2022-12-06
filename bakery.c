@@ -1,3 +1,10 @@
+/*
+ * The Great Operating Systems Bake Off
+ * 
+ * Authors: Anna Carvalho & Cymbre Spoehr
+ * Date: 12/06/22
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -12,28 +19,25 @@
 #include "ingredients.h"
 
 int isAvailable(int isNeeded, int isAvailable);
-void mixDryAndWetIngredients(Recipe r, Pantry *pantry, char bakerName[], char recipeName[], int* finished, int pantrySem);
+void getIngredients(Recipe r, Pantry *pantry, char bakerName[], char recipeName[], int* finished, int pantrySem);
 void useStandMixer(char bakerName[], int standMixerSem);
 void bake(char bakerName[], char recipeName[], int ovenSem);
 void finish(Pantry *pantry, int pantrySem);
 
-void wait_semaphore(int semId);
-void signal_semaphore(int semId);
-
 void generateDefaultValues(Pantry *p);
 void adjustBakeryValues(int bakersCount, Pantry *p);
 
+void wait_semaphore(int semId);
+void signal_semaphore(int semId);
 void sigHandler(int);
 
 int main(int argv, char *argc[])
 {
     signal(SIGINT, sigHandler);
-    // baker info
-    char name[13];
-    Recipe recipe;
-    int id = 0;
-    int finished = 0;
 
+    pid_t pid;
+
+    // initialize semaphores
     int pantrySem = semget(IPC_PRIVATE, 1, 00600);
     semctl(pantrySem, 0, SETVAL, 1);
 
@@ -43,13 +47,17 @@ int main(int argv, char *argc[])
     int standMixerSem = semget(IPC_PRIVATE, 1, 00600);
     semctl(standMixerSem, 0, SETVAL, 1);
 
-    Recipe recipes[6] = {chocolate_cake, vanilla_cake, cupcakes_with_cherry, cupcakes_with_sprinkles, chocolate_chip_muffins, chocolate_chip_cookies};
-    Pantry *pantry;
+    // baker info
+    char name[13];
+    Recipe recipe;
+    int id = 0;
+    int finished = 0;
 
-    pid_t pid;
+    Recipe recipes[7] = {chocolate_cake, vanilla_cake, funfetti_cake, cupcakes_with_cherry, cupcakes_with_sprinkles, chocolate_chip_muffins, chocolate_chip_cookies};
+    Pantry *pantry;
     int bakersCount;
 
-    // Allocate a shared memory segment
+    // allocate a shared memory segment
     int bakeryMemoryID = shmget(IPC_PRIVATE, sizeof(Pantry), IPC_CREAT | S_IRUSR | S_IWUSR);
     if (bakeryMemoryID < 0)
     {
@@ -57,6 +65,7 @@ int main(int argv, char *argc[])
         exit(1);
     }
 
+    // attach pantry to shared memory segment
     pantry = (Pantry *)shmat(bakeryMemoryID, 0, 0);
     if (pantry == (void *)-1)
     {
@@ -64,13 +73,14 @@ int main(int argv, char *argc[])
         exit(1);
     }
 
+    // get number of bakers
     printf("Enter number of bakersCount:\n");
     scanf("%d", &bakersCount);
 
     generateDefaultValues(pantry);
     adjustBakeryValues(bakersCount, pantry);
 
-    // generates a user-defined number of bakersCount
+    // generate a user-defined number of bakers
     for (int i = 1; i < bakersCount; i++)
     {
         if ((pid = fork()) != 0) // parent process
@@ -82,29 +92,28 @@ int main(int argv, char *argc[])
 
     // randomly assign baker name & recipe
     srand(time(NULL) + id);
-    recipe = recipes[rand() % 6];
+    recipe = recipes[rand() % 7];
     strcpy(name, baker_names[rand() % 13]);
 
-    mixDryAndWetIngredients(chocolate_cake, pantry, name, recipe.name, &finished, pantrySem);
-
+    // make the recipe!
+    getIngredients(chocolate_cake, pantry, name, recipe.name, &finished, pantrySem);
     if (finished == 0)
         useStandMixer(name, standMixerSem);
-
     bake(name, recipe.name, ovenSem);
     finish(pantry, pantrySem);
 
-    // parent baker manages memory
+    // parent process manages memory
     if (id == 0)
     {
         while (pantry->finished < bakersCount) {}
 
-        // Detach the shared memory segment
+        // detach the shared memory segment
         shmdt(pantry);
 
-        // Deallocate the shared memory segment
+        // deallocate the shared memory segment
         shmctl(bakeryMemoryID, IPC_RMID, 0);
 
-        // Deallocate semaphores
+        // deallocate semaphores
         semctl(pantrySem, 0, IPC_RMID);
         semctl(ovenSem, 0, IPC_RMID);
         semctl(standMixerSem, 0, IPC_RMID);
@@ -113,6 +122,10 @@ int main(int argv, char *argc[])
     return 0;
 }
 
+/*
+ * Method that checks if there are enough ingredients
+ * for a recipe
+ */
 int isAvailable(int isNeeded, int isAvailable)
 {
     if (isAvailable - isNeeded > -1)
@@ -121,10 +134,15 @@ int isAvailable(int isNeeded, int isAvailable)
     return 0;
 }
 
-void mixDryAndWetIngredients(Recipe r, Pantry *pantry, char bakerName[], char recipeName[], int* finished, int pantrySem)
+/*
+ * Method that simulates bakers gathering their ingredients
+ */
+void getIngredients(Recipe r, Pantry *pantry, char bakerName[], char recipeName[], int* finished, int pantrySem)
 {
     wait_semaphore(pantrySem);
+
     printf("%s is in the pantry\n\n", bakerName);
+    
     sleep(1);
 
     if (!(isAvailable(r.dry_ingredients.flour, pantry->flour) &&
@@ -140,9 +158,10 @@ void mixDryAndWetIngredients(Recipe r, Pantry *pantry, char bakerName[], char re
     {
         printf("%s doesn't have enough ingredients to finish their %s. %s has left the kitchen.\n\n", bakerName, recipeName, bakerName);
 
-        // Do something to terminate the process since it can't finish
         signal_semaphore(pantrySem);
+
         *finished = 1;
+
         return;
     }
 
@@ -161,9 +180,13 @@ void mixDryAndWetIngredients(Recipe r, Pantry *pantry, char bakerName[], char re
     pantry->milk = pantry->milk - r.wet_ingredients.milk;
 
     printf("%s has left the pantry\n\n", bakerName);
+
     signal_semaphore(pantrySem);
 }
 
+/*
+ * Method that simulares baker using the stand mixer
+ */
 void useStandMixer(char bakerName[], int standMixerSem)
 {
     wait_semaphore(standMixerSem);
@@ -177,23 +200,79 @@ void useStandMixer(char bakerName[], int standMixerSem)
     printf("%s is done using the stand mixer.\n\n", bakerName);
 }
 
+/*
+ * Method that simulares baker using the oven
+ */
 void bake(char bakerName[], char recipeName[], int ovenSem)
 {
     wait_semaphore(ovenSem);
 
-    // TODO: print name not number
     printf("%s is baking their %s!\n\n", bakerName, recipeName);
+
     sleep(5);
+
     printf("ding ding ding! The %s is done!\n\n", recipeName);
 
     signal_semaphore(ovenSem);
 }
 
+/*
+ * Method that is called when the baker is finished;
+ * is used to determine when to terminate processes
+ */
 void finish(Pantry *pantry, int pantrySem)
 {
     wait_semaphore(pantrySem);
     pantry->finished++;
     signal_semaphore(pantrySem);
+}
+
+/*
+ * Method that generates default ingredient values
+ */
+void generateDefaultValues(Pantry *p)
+{
+    p->flour = 390;
+    p->cocoa_powder = 64;
+    p->baking_powder = 4;
+    p->baking_soda = 12;
+    p->salt = 6;
+    p->butter = 170;
+    p->sugar = 400;
+    p->vanilla = 14;
+    p->eggs = 4;
+    p->milk = 340;
+    p->cream = 100;
+    p->powdered_sugar = 400;
+    p->finished = 0;
+}
+
+/*
+ * Method that adjusts ingredient values based on the number
+ * of bakers
+ */
+void adjustBakeryValues(int bakersCount, Pantry *p)
+{
+    if (bakersCount <= 1)
+        return;
+
+    // increase ingredients by .85x for every baker
+    double ingredientMult = .85 * (bakersCount - 1);
+    // increase equipment by 1 for every 3 bakersCount
+    double equipmentMult = (bakersCount - 1) / 3;
+
+    p->flour += p->flour * ingredientMult;
+    p->cocoa_powder += p->cocoa_powder * ingredientMult;
+    p->baking_powder += p->baking_powder * ingredientMult;
+    p->baking_soda += p->baking_soda * ingredientMult;
+    p->salt += p->salt * ingredientMult;
+    p->butter += p->butter * ingredientMult;
+    p->sugar += p->sugar * ingredientMult;
+    p->vanilla += p->vanilla * ingredientMult;
+    p->eggs += p->eggs * ingredientMult;
+    p->milk += p->milk * ingredientMult;
+    p->cream += p->cream * ingredientMult;
+    p->powdered_sugar += p->powdered_sugar * ingredientMult;
 }
 
 void wait_semaphore(int semId)
@@ -216,50 +295,6 @@ void signal_semaphore(int semId)
     sbuf.sem_flg = 0;
 
     semop(semId, &sbuf, 1);
-}
-
-void generateDefaultValues(Pantry *p)
-{
-    // these are just placeholder values for now
-    p->flour = 390;
-    p->cocoa_powder = 64;
-    p->baking_powder = 4;
-    p->baking_soda = 12;
-    p->salt = 6;
-    p->butter = 170;
-    p->sugar = 400;
-    p->vanilla = 14;
-    p->eggs = 4;
-    p->milk = 340;
-    p->cream = 100;
-    p->powdered_sugar = 400;
-    p->finished = 0;
-}
-
-void adjustBakeryValues(int bakersCount, Pantry *p)
-{
-    if (bakersCount <= 1)
-        return;
-
-    // increase ingredients by .75x for every baker
-    double ingredientMult = .75 * (bakersCount - 1);
-    // increase equipment by 1 for every 3 bakersCount
-    double equipmentMult = (bakersCount - 1) / 3;
-
-    p->flour += p->flour * ingredientMult;
-    p->cocoa_powder += p->cocoa_powder * ingredientMult;
-    p->baking_powder += p->baking_powder * ingredientMult;
-    p->baking_soda += p->baking_soda * ingredientMult;
-    p->salt += p->salt * ingredientMult;
-    p->butter += p->butter * ingredientMult;
-    p->sugar += p->sugar * ingredientMult;
-    p->vanilla += p->vanilla * ingredientMult;
-    p->eggs += p->eggs * ingredientMult;
-    p->milk += p->milk * ingredientMult;
-    p->cream += p->cream * ingredientMult;
-    p->powdered_sugar += p->powdered_sugar * ingredientMult;
-
-    // TODO: how to do counting semaphore?
 }
 
 void sigHandler(int sigNum)

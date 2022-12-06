@@ -22,6 +22,5 @@ typedef struct baker
 {
     int stationNumber;
     Recipe recipe;
-    int dishCounter;
     char name[40];
 } Baker;
