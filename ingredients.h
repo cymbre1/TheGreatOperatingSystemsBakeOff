@@ -1,6 +1,6 @@
 #include "recipe.h"
 
-typedef struct bakery
+typedef struct pantry
 {
     // ingredients
     int flour;
@@ -15,7 +15,7 @@ typedef struct bakery
     int milk;
     int cream;
     int powdered_sugar;
-} Bakery;
+} Pantry;
 
 typedef struct baker
 {
