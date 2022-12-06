@@ -25,7 +25,7 @@ void adjustBakeryValues(int bakersCount, Bakery *b);
 int main(int argv, char *argc[])
 {
     // baker info
-    char name[13] = "Fake";
+    char name[13];
     Recipe recipe;
     int id = 0;
     int dishCount = 0;
