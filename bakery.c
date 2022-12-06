@@ -78,13 +78,11 @@ int main(int argv, char* argc[])
         if ((pid = fork()) != 0)    // parent process
         {
             // randomly assign baker name & recipe
-            int recipeNum = rand() % 6;
-            recipe = recipes[recipeNum];
+            recipe = recipes[rand() % 6];
 
-            int nameNum = rand() % 13;
-            strcpy(name, baker_names[nameNum]);
-            printf("My name is %s %d\n", name, recipeNum);
-            printf("My recipe is %s %d\n", recipe.name, nameNum);
+            strcpy(name, baker_names[rand() % 13]);
+            printf("My name is %s\n", name);
+            printf("My recipe is %s\n", recipe.name);
             id = i + 1;
             break;
         }
