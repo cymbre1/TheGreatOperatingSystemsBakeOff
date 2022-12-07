@@ -53,7 +53,7 @@ int main(int argv, char *argc[])
     int id = 0;
     int finished = 0;
 
-    Recipe recipes[7] = {chocolate_cake, vanilla_cake, funfetti_cake, cupcakes_with_cherry, cupcakes_with_sprinkles, chocolate_chip_muffins, chocolate_chip_cookies};
+    Recipe recipes[7] = {chocolate_cake, vanilla_cake, funfetti_cake, chocolate_cupcakes, vanilla_cupcakes, chocolate_chip_muffins, chocolate_chip_cookies};
     Pantry *pantry;
     int bakersCount;
 
@@ -85,19 +85,21 @@ int main(int argv, char *argc[])
     {
         if ((pid = fork()) != 0) // parent process
             break;
+
         id = i;
     }
 
     // randomly assign baker name & recipe
-    srand(time(NULL) + id);
-    recipe = recipes[rand() % 7];
+    srand(time(NULL) + (id*100));
     strcpy(name, baker_names[rand() % 13]);
+    recipe = recipes[rand() % 7];
 
     // make the recipe!
     getIngredients(chocolate_cake, pantry, name, recipe.name, &finished, pantrySem);
-    if (finished == 0)
+    if (finished == 0) {
         useStandMixer(name, standMixerSem);
-    bake(name, recipe.name, ovenSem);
+        bake(name, recipe.name, ovenSem);
+    }
     finish(pantry, pantrySem);
 
     // parent process manages memory

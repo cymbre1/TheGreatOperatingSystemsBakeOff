@@ -31,9 +31,9 @@ typedef struct recipe
 
 Recipe chocolate_cake = {"Chocolate Cake", (DryIngredients){ 210, 64, 4, 12, 6}, (WetIngredients){1, 400, 4, 2, 240}, 5};
 Recipe vanilla_cake = {"Vanilla Cake", (DryIngredients){390, 0, 4, 0, 2}, (WetIngredients){170, 397, 14, 4, 340}, 5};
-Recipe funfetti_cake = {"Vanilla Cake", (DryIngredients){390, 0, 4, 0, 2}, (WetIngredients){170, 397, 14, 4, 340}, 5};
-Recipe cupcakes_with_cherry = {"Vanilla Cake", (DryIngredients){390, 0, 4, 0, 2}, (WetIngredients){170, 397, 14, 4, 340}, 4};
-Recipe cupcakes_with_sprinkles = {"Vanilla Cake", (DryIngredients){390, 0, 4, 0, 2}, (WetIngredients){170, 397, 14, 4, 340}, 4};
+Recipe funfetti_cake = {"Funfetti Cake", (DryIngredients){390, 0, 4, 0, 2}, (WetIngredients){170, 397, 14, 4, 340}, 5};
+Recipe chocolate_cupcakes = {"Chocolate Cupcakes", (DryIngredients){390, 64, 4, 0, 2}, (WetIngredients){170, 397, 14, 4, 340}, 4};
+Recipe vanilla_cupcakes = {"Vanilla Cupcakes", (DryIngredients){390, 0, 4, 0, 2}, (WetIngredients){170, 397, 14, 4, 340}, 4};
 Recipe chocolate_chip_muffins = {"Chocolate Chip Muffins", (DryIngredients){390, 0, 4, 0, 2}, (WetIngredients){170, 397, 14, 4, 340}, 4};
 Recipe chocolate_chip_cookies = {"Chocolate Chip Cookies", (DryIngredients){390, 0, 4, 0, 2}, (WetIngredients){170, 397, 14, 4, 340}, 3};
 
