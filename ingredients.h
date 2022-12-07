@@ -15,12 +15,7 @@ typedef struct pantry
     int milk;
     int cream;
     int powdered_sugar;
-    int finished;
-} Pantry;
 
-typedef struct baker
-{
-    int stationNumber;
-    Recipe recipe;
-    char name[40];
-} Baker;
+    // used to determine process termination
+    int finished; 
+} Pantry;

@@ -37,7 +37,6 @@ Recipe cupcakes_with_sprinkles = {"Vanilla Cake", (DryIngredients){390, 0, 4, 0,
 Recipe chocolate_chip_muffins = {"Chocolate Chip Muffins", (DryIngredients){390, 0, 4, 0, 2}, (WetIngredients){170, 397, 14, 4, 340}, 4};
 Recipe chocolate_chip_cookies = {"Chocolate Chip Cookies", (DryIngredients){390, 0, 4, 0, 2}, (WetIngredients){170, 397, 14, 4, 340}, 3};
 
-
 char baker_names[21][13] = {"Cymbre", "Anna", "Chase", "Dr. Bobeldyk", "Wyatt", "Dale", 
                            "Mohammad", "Lucas", "Ethan", "Andrew", "Hanna", "Ari", "Donovan", 
                            "Michael", "Alex", "Raphael", "Trevor", "Steven", "Eldin", "Calob", "Cameron"};

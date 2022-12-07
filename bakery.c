@@ -84,9 +84,7 @@ int main(int argv, char *argc[])
     for (int i = 1; i < bakersCount; i++)
     {
         if ((pid = fork()) != 0) // parent process
-        {
             break;
-        }
         id = i;
     }
 
@@ -105,6 +103,7 @@ int main(int argv, char *argc[])
     // parent process manages memory
     if (id == 0)
     {
+        // wait for all processes to finish baking
         while (pantry->finished < bakersCount) {}
 
         // detach the shared memory segment
@@ -185,7 +184,7 @@ void getIngredients(Recipe r, Pantry *pantry, char bakerName[], char recipeName[
 }
 
 /*
- * Method that simulares baker using the stand mixer
+ * Method that simulates baker using the stand mixer
  */
 void useStandMixer(char bakerName[], int standMixerSem)
 {
@@ -201,7 +200,7 @@ void useStandMixer(char bakerName[], int standMixerSem)
 }
 
 /*
- * Method that simulares baker using the oven
+ * Method that simulates baker using the oven
  */
 void bake(char bakerName[], char recipeName[], int ovenSem)
 {
@@ -223,7 +222,9 @@ void bake(char bakerName[], char recipeName[], int ovenSem)
 void finish(Pantry *pantry, int pantrySem)
 {
     wait_semaphore(pantrySem);
+
     pantry->finished++;
+
     signal_semaphore(pantrySem);
 }
 
@@ -237,13 +238,13 @@ void generateDefaultValues(Pantry *p)
     p->baking_powder = 4;
     p->baking_soda = 12;
     p->salt = 6;
+
     p->butter = 170;
     p->sugar = 400;
     p->vanilla = 14;
     p->eggs = 4;
     p->milk = 340;
-    p->cream = 100;
-    p->powdered_sugar = 400;
+
     p->finished = 0;
 }
 
